@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import LessonHeader from '../components/LessonHeader';
 import QuestionStatement from '../components/QuestionStatement';
+import AnswerOptions from '../components/AnswerOptions';
 
 export default function ExerciseScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
   const totalQuestions = 5;
+
+  const options = ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'bool'>"];
 
   const handleCloseLesson = () => {
     const confirmExit = window.confirm(
@@ -12,6 +16,7 @@ export default function ExerciseScreen() {
     );
     if (confirmExit) {
       setCurrentQuestion(1);
+      setSelectedAnswer(null);
     }
   };
 
@@ -30,23 +35,27 @@ export default function ExerciseScreen() {
             Exercício {currentQuestion} de {totalQuestions}
           </span>
           
-          {/* Integração do Enunciado Dinâmico (#12) */}
           <QuestionStatement 
             prefix="Qual é a saída de"
             code="print(type(42))"
             suffix="em Python?"
           />
 
-          <p className="text-sm text-gray-400">
-            (As alternativas #13 entrarão aqui)
-          </p>
+          <AnswerOptions 
+            options={options}
+            selectedOption={selectedAnswer}
+            onSelect={setSelectedAnswer}
+          />
         </div>
       </main>
 
       <footer className="w-full border-t-2 border-gray-800 p-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <button
-            onClick={() => setCurrentQuestion((prev) => Math.max(1, prev - 1))}
+            onClick={() => {
+              setCurrentQuestion((prev) => Math.max(1, prev - 1));
+              setSelectedAnswer(null);
+            }}
             disabled={currentQuestion === 1}
             className="px-6 py-3 rounded-xl font-bold border-2 border-gray-600 text-gray-300 disabled:opacity-40 hover:bg-gray-800 transition"
           >
@@ -54,8 +63,12 @@ export default function ExerciseScreen() {
           </button>
 
           <button
-            onClick={() => setCurrentQuestion((prev) => Math.min(totalQuestions, prev + 1))}
-            className="px-8 py-3 rounded-xl font-bold bg-green-500 hover:bg-green-600 text-gray-950 shadow-[0_4px_0_#15803d] active:translate-y-1 active:shadow-none transition-all"
+            onClick={() => {
+              setCurrentQuestion((prev) => Math.min(totalQuestions, prev + 1));
+              setSelectedAnswer(null);
+            }}
+            disabled={!selectedAnswer}
+            className="px-8 py-3 rounded-xl font-bold bg-green-500 hover:bg-green-600 text-gray-950 shadow-[0_4px_0_#15803d] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {currentQuestion === totalQuestions ? 'Concluir' : 'Avançar Progresso'}
           </button>
