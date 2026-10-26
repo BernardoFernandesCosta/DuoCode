@@ -2,21 +2,40 @@ import React, { useState } from 'react';
 import LessonHeader from '../components/LessonHeader';
 import QuestionStatement from '../components/QuestionStatement';
 import AnswerOptions from '../components/AnswerOptions';
+import FeedbackBanner from '../components/FeedbackBanner';
 
 export default function ExerciseScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(null);
+  
   const totalQuestions = 5;
-
   const options = ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'bool'>"];
+  const correctAnswer = "<class 'int'>"; // Simulação do gabarito vindo do backend
 
   const handleCloseLesson = () => {
-    const confirmExit = window.confirm(
-      'Tem a certeza de que deseja sair? Perderá o progresso desta lição!'
-    );
-    if (confirmExit) {
+    if (window.confirm('Tem a certeza de que deseja sair? Perderá o progresso desta lição!')) {
       setCurrentQuestion(1);
-      setSelectedAnswer(null);
+      resetState();
+    }
+  };
+
+  const resetState = () => {
+    setSelectedAnswer(null);
+    setIsChecking(false);
+    setIsCorrect(null);
+  };
+
+  const handleAction = () => {
+    if (!isChecking) {
+      // Fase 1: Clicou em "Verificar"
+      setIsChecking(true);
+      setIsCorrect(selectedAnswer === correctAnswer);
+    } else {
+      // Fase 2: Clicou em "Avançar" após ver o feedback
+      setCurrentQuestion((prev) => Math.min(totalQuestions, prev + 1));
+      resetState();
     }
   };
 
@@ -29,7 +48,7 @@ export default function ExerciseScreen() {
         lives={5}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center max-w-2xl w-full mx-auto px-4">
+      <main className="flex-1 flex flex-col items-center justify-center max-w-2xl w-full mx-auto px-4 pb-12">
         <div className="w-full p-6 border-2 border-gray-700 rounded-2xl bg-[#1b2b32] text-center space-y-4">
           <span className="text-xs uppercase tracking-wider text-green-400 font-bold">
             Exercício {currentQuestion} de {totalQuestions}
@@ -41,36 +60,44 @@ export default function ExerciseScreen() {
             suffix="em Python?"
           />
 
-          <AnswerOptions 
-            options={options}
-            selectedOption={selectedAnswer}
-            onSelect={setSelectedAnswer}
-          />
+          {/* Opções são bloqueadas enquanto o feedback está visível */}
+          <div className={isChecking ? 'pointer-events-none opacity-80' : ''}>
+            <AnswerOptions 
+              options={options}
+              selectedOption={selectedAnswer}
+              onSelect={setSelectedAnswer}
+            />
+          </div>
         </div>
       </main>
 
-      <footer className="w-full border-t-2 border-gray-800 p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+      <footer className="w-full border-t-2 border-gray-800 bg-[#131f24] relative z-10">
+        {isChecking && (
+          <FeedbackBanner isCorrect={isCorrect} correctAnswer={correctAnswer} />
+        )}
+        
+        <div className="max-w-4xl mx-auto flex justify-between items-center p-4">
           <button
             onClick={() => {
               setCurrentQuestion((prev) => Math.max(1, prev - 1));
-              setSelectedAnswer(null);
+              resetState();
             }}
-            disabled={currentQuestion === 1}
+            disabled={currentQuestion === 1 || isChecking}
             className="px-6 py-3 rounded-xl font-bold border-2 border-gray-600 text-gray-300 disabled:opacity-40 hover:bg-gray-800 transition"
           >
             Voltar
           </button>
 
           <button
-            onClick={() => {
-              setCurrentQuestion((prev) => Math.min(totalQuestions, prev + 1));
-              setSelectedAnswer(null);
-            }}
+            onClick={handleAction}
             disabled={!selectedAnswer}
-            className="px-8 py-3 rounded-xl font-bold bg-green-500 hover:bg-green-600 text-gray-950 shadow-[0_4px_0_#15803d] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+            className={`px-8 py-3 rounded-xl font-bold shadow-[0_4px_0_rgba(0,0,0,0.2)] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed ${
+              isChecking
+                ? (isCorrect ? 'bg-green-500 text-green-950 shadow-[0_4px_0_#15803d]' : 'bg-red-500 text-red-950 shadow-[0_4px_0_#991b1b]')
+                : 'bg-green-500 text-green-950 hover:bg-green-600 shadow-[0_4px_0_#15803d]'
+            }`}
           >
-            {currentQuestion === totalQuestions ? 'Concluir' : 'Avançar Progresso'}
+            {!isChecking ? 'Verificar' : (currentQuestion === totalQuestions ? 'Concluir' : 'Continuar')}
           </button>
         </div>
       </footer>
