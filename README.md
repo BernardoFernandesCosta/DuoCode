@@ -14,7 +14,7 @@ O sistema funciona como um ambiente de aprendizado prático e contínuo. Ele pos
 * Bernardo Fernandes Costa
 * Fernanda Alves Andrade
 * Maria Paula Miranda de Souza Montovani Gasparini
-* Vitor de Souza Lopes
+* Vitor de Sousa Costa Lopes
 
 ## 📋 Organização e Acompanhamento
 O gerenciamento das tarefas, sprints e do fluxo de desenvolvimento do DuoCode está sendo feito através da metodologia ágil.
