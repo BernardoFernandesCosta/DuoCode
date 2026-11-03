@@ -1,11 +1,7 @@
-import './App.css'
+import ExerciseScreen from './pages/ExerciseScreen';
 
 function App() {
-  return (
-    <div>
-      <h1>DuoCode Frontend</h1>
-    </div>
-  )
+  return <ExerciseScreen />;
 }
 
-export default App
+export default App;
