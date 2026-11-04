@@ -21,11 +21,6 @@ export default function FeedbackBanner({ isCorrect, correctAnswer }) {
           <span className="font-bold text-xl">
             {isSuccess ? 'Excelente!' : 'Não foi desta vez.'}
           </span>
-          {!isSuccess && (
-            <span className="text-sm font-medium mt-1 opacity-90">
-              Resposta correta: {correctAnswer}
-            </span>
-          )}
         </div>
       </div>
     </div>
