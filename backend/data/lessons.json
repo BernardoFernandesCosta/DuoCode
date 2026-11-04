@@ -1,0 +1,17 @@
+
+{
+  "lessons": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Qual é a saída de print(type(42)) em Python?",
+      "options": [
+        "<class 'int'>",
+        "<class 'str'>",
+        "<class 'float'>",
+        "<class 'bool'>"
+      ],
+      "correct_answer": "<class 'int'>"
+    }
+  ]
+}
