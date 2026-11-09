@@ -6,7 +6,7 @@
 | Bernardo Fernandes Costa | Desenvolvedor(a) / Scrum Master |
 | Fernanda Alves Andrade   | Desenvolvedor(a) |
 | Maria Paula Miranda   | Desenvolvedor(a) |
-| Vitor de Sousa Lopes  | Product Owner |
+| Vitor de Sousa Lopes  | Desenvolvedor(a) |
 
 ## 2. Calendário e Milestones
 
