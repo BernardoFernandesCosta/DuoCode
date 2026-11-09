@@ -1,0 +1,29 @@
+
+{
+  "lessons": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Qual comando usamos para imprimir algo na tela em Python?",
+      "options": [
+        {
+          "id": "A",
+          "text": "input()"
+        },
+        {
+          "id": "B",
+          "text": "print()"
+        },
+        {
+          "id": "C",
+          "text": "import()"
+        },
+        {
+          "id": "D",
+          "text": "return()"
+        }
+      ],
+      "correct_answer": "B"
+    }
+  ]
+}
