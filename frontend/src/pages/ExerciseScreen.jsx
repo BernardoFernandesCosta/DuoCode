@@ -1,53 +1,81 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LessonHeader from '../components/LessonHeader';
 import QuestionStatement from '../components/QuestionStatement';
 import AnswerOptions from '../components/AnswerOptions';
 import FeedbackBanner from '../components/FeedbackBanner';
 
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+
 export default function ExerciseScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [lesson, setLesson] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isCorrect, setIsCorrect] = useState(null);
-
-  // Dados recebidos do backend
-  const [lesson, setLesson] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const totalQuestions = 5;
-  const API_URL = 'http://127.0.0.1:8000';
 
-  // Busca a questão quando a tela é carregada
-  useEffect(() => {
-    async function fetchLesson() {
-      try {
-        const response = await fetch(`${API_URL}/lessons/1`);
-
-        if (!response.ok) {
-          throw new Error('Não foi possível carregar a questão.');
-        }
-
-        const data = await response.json();
-        setLesson(data);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchLesson();
-  }, []);
+  const getOptionLabel = (option) => {
+    if (typeof option === 'string') return option;
+    return option.text ?? option.label ?? option.value ?? option.id;
+  };
 
   const resetState = () => {
     setSelectedAnswer(null);
     setIsChecking(false);
     setIsCorrect(null);
-    setError('');
+    setIsSubmitting(false);
+    setError(null);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchLesson = async () => {
+      setIsLoadingLesson(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_URL}/lessons/${currentQuestion}`);
+
+        if (!response.ok) {
+          const detail =
+            response.status === 404
+              ? `Lição ${currentQuestion} não encontrada no servidor.`
+              : 'Não foi possível carregar a lição.';
+          throw new Error(detail);
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setLesson(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setLesson(null);
+          setError(
+            err instanceof TypeError
+              ? 'Sem conexão com o servidor. Verifique se o backend está rodando.'
+              : err.message
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingLesson(false);
+        }
+      }
+    };
+
+    fetchLesson();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentQuestion]);
 
   const handleCloseLesson = () => {
     if (window.confirm('Tem a certeza de que deseja sair? Perderá o progresso desta lição!')) {
@@ -56,65 +84,67 @@ export default function ExerciseScreen() {
     }
   };
 
-  // Envia a resposta selecionada para o backend
-  const handleAction = async () => {
-    if (!isChecking) {
-      setIsSubmitting(true);
-      setError('');
+  const validateAnswer = async () => {
+    if (!lesson || !selectedAnswer) return;
 
-      try {
-        const response = await fetch(
-          `${API_URL}/lessons/1/validate`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              answer: selectedAnswer
-            })
-          }
-        );
+    setIsSubmitting(true);
+    setError(null);
 
-        if (!response.ok) {
-          throw new Error('Não foi possível validar sua resposta.');
+    const matchedOption = lesson.options.find(
+      (opt) => getOptionLabel(opt) === selectedAnswer
+    );
+    const answerPayload =
+      matchedOption && typeof matchedOption === 'object'
+        ? matchedOption.id
+        : selectedAnswer;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/lessons/${currentQuestion}/validate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer: answerPayload }),
         }
+      );
 
-        const data = await response.json();
-
-        setIsCorrect(data.is_correct);
-        setIsChecking(true);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsSubmitting(false);
+      if (!response.ok) {
+        const detail =
+          response.status === 404
+            ? 'Lição não encontrada.'
+            : response.status === 422
+              ? 'Alternativa inválida.'
+              : 'Erro no servidor ao validar a resposta.';
+        throw new Error(detail);
       }
+
+    const data = await response.json();
+    setIsCorrect(data.is_correct);
+    setCorrectAnswer(data.correct_answer);
+    setIsChecking(true);
+    } catch (err) {
+      setError(
+        err instanceof TypeError
+          ? 'Sem conexão com o servidor. Verifique sua conexão e tente novamente.'
+          : err.message
+      );
+      setIsChecking(false);
+      setIsCorrect(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAction = () => {
+    if (!isChecking) {
+      validateAnswer();
     } else {
       setCurrentQuestion((prev) => Math.min(totalQuestions, prev + 1));
       resetState();
     }
   };
 
-  // Exibe uma mensagem enquanto a questão é carregada
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#131f24] text-white flex items-center justify-center">
-        Carregando questão...
-      </div>
-    );
-  }
-
-  // Exibe erro se não conseguir carregar a questão
-  if (!lesson) {
-    return (
-      <div className="min-h-screen bg-[#131f24] text-white flex flex-col items-center justify-center gap-4">
-        <p>{error || 'Questão não encontrada.'}</p>
-        <button onClick={() => window.location.reload()}>
-          Tentar novamente
-        </button>
-      </div>
-    );
-  }
+  const optionLabels = lesson?.options ? lesson.options.map(getOptionLabel) : [];
 
   return (
     <div className="min-h-screen bg-[#131f24] text-white flex flex-col justify-between">
@@ -131,25 +161,39 @@ export default function ExerciseScreen() {
             Exercício {currentQuestion} de {totalQuestions}
           </span>
 
-          <QuestionStatement question={lesson.question} />
+          {isLoadingLesson ? (
+            <p className="py-8 text-gray-300 font-semibold">Carregando exercício...</p>
+          ) : lesson ? (
+            <>
+              <QuestionStatement
+                prefix={lesson.question}
+                code=""
+                suffix=""
+              />
 
-          <div className={isChecking ? 'pointer-events-none opacity-80' : ''}>
-            <AnswerOptions
-              options={lesson.options}
-              selectedOption={selectedAnswer}
-              onSelect={setSelectedAnswer}
-            />
-          </div>
+              <div className={isChecking || isSubmitting ? 'pointer-events-none opacity-80' : ''}>
+                <AnswerOptions
+                  options={optionLabels}
+                  selectedOption={selectedAnswer}
+                  onSelect={setSelectedAnswer}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="py-8 text-gray-400">Nenhum exercício disponível nesta etapa.</p>
+          )}
         </div>
       </main>
 
       <footer className="w-full border-t-2 border-gray-800 bg-[#131f24] relative z-10">
         {isChecking && (
-          <FeedbackBanner isCorrect={isCorrect} />
+          <FeedbackBanner isCorrect={isCorrect} correctAnswer={correctAnswer} />
         )}
 
         {error && (
-          <p className="text-red-400 text-center p-2">{error}</p>
+          <p role="alert" className="max-w-4xl mx-auto px-4 pt-4 text-sm font-bold text-red-400 text-center">
+            {error}
+          </p>
         )}
 
         <div className="max-w-4xl mx-auto flex justify-between items-center p-4">
@@ -166,7 +210,7 @@ export default function ExerciseScreen() {
 
           <button
             onClick={handleAction}
-            disabled={!selectedAnswer || isSubmitting}
+            disabled={!selectedAnswer || isSubmitting || isLoadingLesson || !lesson}
             className={`px-8 py-3 rounded-xl font-bold shadow-[0_4px_0_rgba(0,0,0,0.2)] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed ${
               isChecking
                 ? (isCorrect ? 'bg-green-500 text-green-950 shadow-[0_4px_0_#15803d]' : 'bg-red-500 text-red-950 shadow-[0_4px_0_#991b1b]')
