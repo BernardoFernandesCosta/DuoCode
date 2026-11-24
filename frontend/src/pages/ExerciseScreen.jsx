@@ -28,6 +28,7 @@ export default function ExerciseScreen() {
     setSelectedAnswer(null);
     setIsChecking(false);
     setIsCorrect(null);
+    setCorrectAnswer(null);
     setIsSubmitting(false);
     setError(null);
   };
@@ -78,7 +79,11 @@ export default function ExerciseScreen() {
   }, [currentQuestion]);
 
   const handleCloseLesson = () => {
-    if (window.confirm('Tem a certeza de que deseja sair? Perderá o progresso desta lição!')) {
+    if (
+      window.confirm(
+        'Tem a certeza de que deseja sair? Perderá o progresso desta lição!'
+      )
+    ) {
       setCurrentQuestion(1);
       resetState();
     }
@@ -118,10 +123,10 @@ export default function ExerciseScreen() {
         throw new Error(detail);
       }
 
-    const data = await response.json();
-    setIsCorrect(data.is_correct);
-    setCorrectAnswer(data.correct_answer);
-    setIsChecking(true);
+      const data = await response.json();
+      setIsCorrect(data.is_correct);
+      setCorrectAnswer(data.correct_answer);
+      setIsChecking(true);
     } catch (err) {
       setError(
         err instanceof TypeError
@@ -162,16 +167,20 @@ export default function ExerciseScreen() {
           </span>
 
           {isLoadingLesson ? (
-            <p className="py-8 text-gray-300 font-semibold">Carregando exercício...</p>
+            <p className="py-8 text-gray-300 font-semibold">
+              Carregando exercício...
+            </p>
           ) : lesson ? (
             <>
-              <QuestionStatement
-                prefix={lesson.question}
-                code=""
-                suffix=""
-              />
+              <QuestionStatement prefix={lesson.question} code="" suffix="" />
 
-              <div className={isChecking || isSubmitting ? 'pointer-events-none opacity-80' : ''}>
+              <div
+                className={
+                  isChecking || isSubmitting
+                    ? 'pointer-events-none opacity-80'
+                    : ''
+                }
+              >
                 <AnswerOptions
                   options={optionLabels}
                   selectedOption={selectedAnswer}
@@ -180,7 +189,9 @@ export default function ExerciseScreen() {
               </div>
             </>
           ) : (
-            <p className="py-8 text-gray-400">Nenhum exercício disponível nesta etapa.</p>
+            <p className="py-8 text-gray-400">
+              Nenhum exercício disponível nesta etapa.
+            </p>
           )}
         </div>
       </main>
@@ -191,7 +202,10 @@ export default function ExerciseScreen() {
         )}
 
         {error && (
-          <p role="alert" className="max-w-4xl mx-auto px-4 pt-4 text-sm font-bold text-red-400 text-center">
+          <p
+            role="alert"
+            className="max-w-4xl mx-auto px-4 pt-4 text-sm font-bold text-red-400 text-center"
+          >
             {error}
           </p>
         )}
@@ -210,10 +224,14 @@ export default function ExerciseScreen() {
 
           <button
             onClick={handleAction}
-            disabled={!selectedAnswer || isSubmitting || isLoadingLesson || !lesson}
+            disabled={
+              !selectedAnswer || isSubmitting || isLoadingLesson || !lesson
+            }
             className={`px-8 py-3 rounded-xl font-bold shadow-[0_4px_0_rgba(0,0,0,0.2)] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed ${
               isChecking
-                ? (isCorrect ? 'bg-green-500 text-green-950 shadow-[0_4px_0_#15803d]' : 'bg-red-500 text-red-950 shadow-[0_4px_0_#991b1b]')
+                ? isCorrect
+                  ? 'bg-green-500 text-green-950 shadow-[0_4px_0_#15803d]'
+                  : 'bg-red-500 text-red-950 shadow-[0_4px_0_#991b1b]'
                 : 'bg-green-500 text-green-950 hover:bg-green-600 shadow-[0_4px_0_#15803d]'
             }`}
           >
@@ -221,7 +239,9 @@ export default function ExerciseScreen() {
               ? 'Verificando...'
               : !isChecking
                 ? 'Verificar'
-                : (currentQuestion === totalQuestions ? 'Concluir' : 'Continuar')}
+                : currentQuestion === totalQuestions
+                  ? 'Concluir'
+                  : 'Continuar'}
           </button>
         </div>
       </footer>
