@@ -1,0 +1,59 @@
+{
+  "code_lessons": [
+    {
+      "id": 1,
+      "type": "code",
+      "title": "Olá, Mundo!",
+      "question": "Escreva um código em Python que imprima exatamente: Olá, DuoCode!",
+      "starter_code": "# Escreva seu código abaixo\n",
+      "test_cases": [
+        {
+          "input": "",
+          "expected_output": "Olá, DuoCode!"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "code",
+      "title": "Soma de dois números",
+      "question": "Leia dois números inteiros usando input() e imprima a soma deles.",
+      "starter_code": "a = int(input())\nb = int(input())\n# Imprima a soma abaixo\n",
+      "test_cases": [
+        {
+          "input": "2\n3\n",
+          "expected_output": "5"
+        },
+        {
+          "input": "10\n25\n",
+          "expected_output": "35"
+        },
+        {
+          "input": "-4\n9\n",
+          "expected_output": "5"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "code",
+      "title": "Par ou Ímpar",
+      "question": "Leia um número inteiro e imprima 'Par' se ele for par, ou 'Ímpar' caso contrário.",
+      "starter_code": "n = int(input())\n# Verifique se n é par ou ímpar\n",
+      "test_cases": [
+        {
+          "input": "4\n",
+          "expected_output": "Par"
+        },
+        {
+          "input": "7\n",
+          "expected_output": "Ímpar"
+        },
+        {
+          "input": "0\n",
+          "expected_output": "Par"
+        }
+      ]
+    }
+  ]
+}
