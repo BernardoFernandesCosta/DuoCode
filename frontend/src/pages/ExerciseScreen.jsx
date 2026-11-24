@@ -12,6 +12,7 @@ export default function ExerciseScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isCorrect, setIsCorrect] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -117,9 +118,10 @@ export default function ExerciseScreen() {
         throw new Error(detail);
       }
 
-      const data = await response.json();
-      setIsCorrect(data.is_correct);
-      setIsChecking(true);
+    const data = await response.json();
+    setIsCorrect(data.is_correct);
+    setCorrectAnswer(data.correct_answer);
+    setIsChecking(true);
     } catch (err) {
       setError(
         err instanceof TypeError
@@ -185,7 +187,7 @@ export default function ExerciseScreen() {
 
       <footer className="w-full border-t-2 border-gray-800 bg-[#131f24] relative z-10">
         {isChecking && (
-          <FeedbackBanner isCorrect={isCorrect} correctAnswer={null} />
+          <FeedbackBanner isCorrect={isCorrect} correctAnswer={correctAnswer} />
         )}
 
         {error && (

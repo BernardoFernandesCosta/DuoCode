@@ -4,24 +4,120 @@
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Qual comando usamos para imprimir algo na tela em Python?",
+      "question": "O que é uma variável em Python?",
       "options": [
-        {
-          "id": "A",
-          "text": "input()"
-        },
-        {
-          "id": "B",
-          "text": "print()"
-        },
-        {
-          "id": "C",
-          "text": "import()"
-        },
-        {
-          "id": "D",
-          "text": "return()"
-        }
+        {"id": "A", "text": "Um mecanismo de armazenamento de dados na memória"},
+        {"id": "B", "text": "Um comando para imprimir informações"},
+        {"id": "C", "text": "Uma estrutura de repetição"},
+        {"id": "D", "text": "Uma função matemática"}
+      ],
+      "correct_answer": "A"
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "question": "Qual operador matemático é utilizado em Python para calcular uma potência?",
+      "options": [
+        {"id": "A", "text": "*"},
+        {"id": "B", "text": "**"},
+        {"id": "C", "text": "%"},
+        {"id": "D", "text": "/"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "id": 3,
+      "type": "multiple_choice",
+      "question": "Qual tipo de dado a função input() retorna antes de qualquer conversão?",
+      "options": [
+        {"id": "A", "text": "int"},
+        {"id": "B", "text": "float"},
+        {"id": "C", "text": "str"},
+        {"id": "D", "text": "bool"}
+      ],
+      "correct_answer": "C"
+    },
+    {
+      "id": 4,
+      "type": "multiple_choice",
+      "question": "Qual função do Python é utilizada para imprimir informações no terminal?",
+      "options": [
+        {"id": "A", "text": "input()"},
+        {"id": "B", "text": "print()"},
+        {"id": "C", "text": "int()"},
+        {"id": "D", "text": "return()"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "id": 5,
+      "type": "multiple_choice",
+      "question": "Qual estrutura permite executar um bloco de comandos quando uma condição é verdadeira e outro bloco quando ela é falsa?",
+      "options": [
+        {"id": "A", "text": "while"},
+        {"id": "B", "text": "for"},
+        {"id": "C", "text": "if / else"},
+        {"id": "D", "text": "def"}
+      ],
+      "correct_answer": "C"
+    },
+    {
+      "id": 6,
+      "type": "multiple_choice",
+      "question": "Qual operador relacional verifica se dois valores são iguais em Python?",
+      "options": [
+        {"id": "A", "text": "="},
+        {"id": "B", "text": "!="},
+        {"id": "C", "text": "=="},
+        {"id": "D", "text": ">="}
+      ],
+      "correct_answer": "C"
+    },
+    {
+      "id": 7,
+      "type": "multiple_choice",
+      "question": "Para que serve a estrutura while em Python?",
+      "options": [
+        {"id": "A", "text": "Executar comandos enquanto uma condição for verdadeira"},
+        {"id": "B", "text": "Definir uma função"},
+        {"id": "C", "text": "Armazenar vários valores"},
+        {"id": "D", "text": "Imprimir informações"}
+      ],
+      "correct_answer": "A"
+    },
+    {
+      "id": 8,
+      "type": "multiple_choice",
+      "question": "O que pode acontecer quando a condição de um while permanece verdadeira e nenhum comando altera essa condição?",
+      "options": [
+        {"id": "A", "text": "O programa termina imediatamente"},
+        {"id": "B", "text": "Ocorre um laço infinito"},
+        {"id": "C", "text": "A função retorna automaticamente"},
+        {"id": "D", "text": "O Python transforma o while em if"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "id": 9,
+      "type": "multiple_choice",
+      "question": "Qual palavra-chave é utilizada para definir uma função própria em Python?",
+      "options": [
+        {"id": "A", "text": "function"},
+        {"id": "B", "text": "create"},
+        {"id": "C", "text": "def"},
+        {"id": "D", "text": "func"}
+      ],
+      "correct_answer": "C"
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "question": "Qual é a principal diferença entre print() e return dentro de uma função?",
+      "options": [
+        {"id": "A", "text": "Ambos sempre retornam valores"},
+        {"id": "B", "text": "print() imprime uma informação, enquanto return devolve um valor"},
+        {"id": "C", "text": "return imprime na tela e print() encerra a função"},
+        {"id": "D", "text": "Não existe diferença"}
       ],
       "correct_answer": "B"
     }
