@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routes.code_lessons import router as code_lessons_router
 from routes.lessons import router as lessons_router
 
 app = FastAPI()
@@ -13,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(lessons_router)
+app.include_router(code_lessons_router)
 
 
 @app.get("/healthcheck")
