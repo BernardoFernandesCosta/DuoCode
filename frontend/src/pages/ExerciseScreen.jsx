@@ -6,7 +6,7 @@ import FeedbackBanner from '../components/FeedbackBanner';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
-export default function ExerciseScreen() {
+export default function ExerciseScreen({ onStartReview }) {
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [lesson, setLesson] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -16,8 +16,35 @@ export default function ExerciseScreen() {
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [lives, setLives] = useState(5);
+  const [isOutOfLives, setIsOutOfLives] = useState(false);
 
-  const totalQuestions = 5;
+const totalQuestions = 5;
+
+useEffect(() => {
+  const fetchHearts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/hearts`);
+
+      if (!response.ok) {
+        throw new Error('Não foi possível carregar as vidas.');
+      }
+
+      const data = await response.json();
+      setLives(data.lives);
+
+      if (data.lives <= 0) {
+        setIsOutOfLives(true);
+      } else {
+        setIsOutOfLives(false);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar vidas:', err);
+    }
+  };
+
+  fetchHearts();
+}, []);
 
   const getOptionLabel = (option) => {
     if (typeof option === 'string') return option;
@@ -44,8 +71,13 @@ export default function ExerciseScreen() {
         const response = await fetch(`${API_URL}/lessons/${currentQuestion}`);
 
         if (!response.ok) {
+          if(response.status === 403) {
+            setIsOutOfLives(true);
+            setLives(0);
+            throw new Error('Você não tem vidas suficientes para continuar. Por favor, Faça uma revisão para recuperar vidas ou aguarde.');
+          }
           const detail =
-            response.status === 404
+          response.status === 404
               ? `Lição ${currentQuestion} não encontrada no servidor.`
               : 'Não foi possível carregar a lição.';
           throw new Error(detail);
@@ -109,11 +141,16 @@ export default function ExerciseScreen() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answer: answerPayload }),
+          body: JSON.stringify({lesson_id: currentQuestion, answer: answerPayload }),
         }
       );
 
       if (!response.ok) {
+        if(response.status === 403) {
+          setIsOutOfLives(true);
+          setLives(0);
+          throw new Error('Você não tem vidas suficientes para continuar. Por favor, Faça uma revisão para recuperar vidas ou aguarde.');
+        }
         const detail =
           response.status === 404
             ? 'Lição não encontrada.'
@@ -126,6 +163,9 @@ export default function ExerciseScreen() {
       const data = await response.json();
       setIsCorrect(data.is_correct);
       setCorrectAnswer(data.correct_answer);
+      if (data.hearts){
+        setLives(data.hearts.lives);
+      }
       setIsChecking(true);
     } catch (err) {
       setError(
@@ -157,7 +197,7 @@ export default function ExerciseScreen() {
         currentStep={currentQuestion}
         totalSteps={totalQuestions}
         onClose={handleCloseLesson}
-        lives={5}
+        lives={lives}
       />
 
       <main className="flex-1 flex flex-col items-center justify-center max-w-2xl w-full mx-auto px-4 pb-12">
@@ -188,6 +228,23 @@ export default function ExerciseScreen() {
                 />
               </div>
             </>
+                    ) : isOutOfLives ? (
+            <div className="py-8 space-y-4">
+              <h2 className="text-2xl font-bold text-red-400">
+                Você está sem vidas!
+              </h2>
+
+              <p className="text-gray-300">
+                Complete uma revisão acertando 3 questões para recuperar uma vida.
+              </p>
+
+              <button
+                onClick={onStartReview}
+                className="px-6 py-3 rounded-xl font-bold bg-green-500 text-green-950 hover:bg-green-600 transition"
+              >
+                Fazer revisão
+              </button>
+            </div>
           ) : (
             <p className="py-8 text-gray-400">
               Nenhum exercício disponível nesta etapa.

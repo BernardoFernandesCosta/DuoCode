@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
+from routes.hearts import ensure_lives_available, consume_life
 router = APIRouter()
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "code_lessons.json"
@@ -20,6 +20,15 @@ def _load_code_lessons() -> list[dict]:
     with open(DATA_FILE, "r", encoding="utf-8") as file:
         data = json.load(file)
     return data["code_lessons"]
+
+def _add_hearts_to_response(response):
+    if not response["is_correct"]:
+        response["hearts"] = consume_life()
+    else:
+        from routes.hearts import get_current_hearts, _get_hearts_response
+        response["hearts"] = _get_hearts_response(get_current_hearts())
+
+    return response
 
 
 def _format_friendly_error(stderr: str) -> str:
@@ -54,6 +63,7 @@ def _format_friendly_error(stderr: str) -> str:
 
 @router.get("/code-lessons")
 def list_code_lessons():
+    ensure_lives_available()
     lessons = _load_code_lessons()
     return {
         "code_lessons": [
@@ -71,6 +81,7 @@ def list_code_lessons():
 
 @router.get("/code-lessons/{lesson_id}")
 def get_code_lesson(lesson_id: int):
+    ensure_lives_available()
     for lesson in _load_code_lessons():
         if lesson["id"] == lesson_id:
             return {
@@ -86,6 +97,7 @@ def get_code_lesson(lesson_id: int):
 
 @router.post("/lessons/{lesson_id}/run-code")
 def run_code_lesson(lesson_id: int, submission: CodeSubmission):
+    ensure_lives_available()
     lesson = next(
         (item for item in _load_code_lessons() if item["id"] == lesson_id),
         None,
@@ -96,13 +108,13 @@ def run_code_lesson(lesson_id: int, submission: CodeSubmission):
         )
 
     if not submission.code.strip():
-        return {
+        return _add_hearts_to_response({
             "is_correct": False,
             "output": "",
             "error": "Digite algum código antes de executar.",
             "passed_tests": 0,
             "total_tests": len(lesson["test_cases"]),
-        }
+        })
 
     test_cases = lesson["test_cases"]
     passed_tests = 0
@@ -118,7 +130,7 @@ def run_code_lesson(lesson_id: int, submission: CodeSubmission):
                 timeout=EXECUTION_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired:
-            return {
+            return  _add_hearts_to_response({
                 "is_correct": False,
                 "output": "",
                 "error": (
@@ -127,16 +139,16 @@ def run_code_lesson(lesson_id: int, submission: CodeSubmission):
                 ),
                 "passed_tests": passed_tests,
                 "total_tests": len(test_cases),
-            }
+            })
 
         if result.returncode != 0:
-            return {
+            return  _add_hearts_to_response({
                 "is_correct": False,
                 "output": result.stdout.strip(),
                 "error": _format_friendly_error(result.stderr),
                 "passed_tests": passed_tests,
                 "total_tests": len(test_cases),
-            }
+            })
 
         actual_output = result.stdout.strip()
         last_output = actual_output
@@ -154,10 +166,10 @@ def run_code_lesson(lesson_id: int, submission: CodeSubmission):
         )
     )
 
-    return {
+    return  _add_hearts_to_response({
         "is_correct": is_correct,
         "output": last_output,
         "error": error_message,
         "passed_tests": passed_tests,
         "total_tests": len(test_cases),
-    }
+    })
