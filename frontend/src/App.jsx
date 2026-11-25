@@ -1,9 +1,17 @@
+
 import { useState } from 'react';
 import ExerciseScreen from './pages/ExerciseScreen';
 import CodeExerciseScreen from './pages/CodeExerciseScreen';
+import ReviewScreen from './pages/ReviewScreen';
 
 function App() {
-  const [mode, setMode] = useState('code');
+  const [mode, setMode] = useState('multiple_choice');
+  const [returnMode, setReturnMode] = useState('multiple_choice');
+  const [lives, setLives] = useState(5);
+
+  function handleLivesUpdated(hearts) {
+    setLives(hearts.lives);
+  }
 
   return (
     <div className="min-h-screen bg-[#131f24] flex flex-col">
@@ -28,6 +36,7 @@ function App() {
             >
               Múltipla Escolha
             </button>
+
             <button
               type="button"
               onClick={() => setMode('code')}
@@ -39,15 +48,36 @@ function App() {
             >
               Editor de Código
             </button>
+
+            <button
+              type="button"
+              onClick={() => {setReturnMode(mode); setMode('review');}}
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition ${
+                mode === 'review'
+                  ? 'bg-green-500 text-green-950'
+                  : 'text-gray-300 hover:bg-gray-800'
+              }`}
+            >
+              Revisão
+            </button>
           </div>
         </div>
       </nav>
 
       <div className="flex-1 flex flex-col">
         {mode === 'multiple_choice' ? (
-          <ExerciseScreen />
+          <ExerciseScreen
+            onStartReview={() => setMode('review')}
+          />
+        ) : mode === 'code' ? (
+          <CodeExerciseScreen
+            onStartReview={() => setMode('review')}
+          />
         ) : (
-          <CodeExerciseScreen />
+          <ReviewScreen
+            onBack={() => setMode('multiple_choice')}
+            onLivesUpdated={handleLivesUpdated}
+          />
         )}
       </div>
     </div>

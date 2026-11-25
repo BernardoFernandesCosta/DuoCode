@@ -6,7 +6,7 @@ import FeedbackBanner from '../components/FeedbackBanner';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
-export default function CodeExerciseScreen() {
+export default function CodeExerciseScreen({onStartReview}) {
   const [lessons, setLessons] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [code, setCode] = useState('');
@@ -16,51 +16,94 @@ export default function CodeExerciseScreen() {
   const [requestError, setRequestError] = useState(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [lives, setLives] = useState(5);
+  const [isOutOfLives, setIsOutOfLives] = useState(false);
+
+useEffect(() => {
+  const fetchHearts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/hearts`);
+
+      if (!response.ok) {
+        throw new Error('Não foi possível carregar as vidas.');
+      }
+
+      const data = await response.json();
+
+      setLives(data.lives);
+
+      if (data.lives <= 0) {
+        setIsOutOfLives(true);
+      } else {
+        setIsOutOfLives(false);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar vidas:', err);
+    }
+  };
+
+  fetchHearts();
+}, []);
+
 
   useEffect(() => {
-    let isMounted = true;
+  let isMounted = true;
 
-    const fetchCodeLessons = async () => {
-      setIsLoadingLessons(true);
-      setRequestError(null);
+  const fetchCodeLessons = async () => {
+    setIsLoadingLessons(true);
+    setRequestError(null);
 
-      try {
-        const response = await fetch(`${API_URL}/code-lessons`);
+    try {
+      const response = await fetch(`${API_URL}/code-lessons`);
 
-        if (!response.ok) {
-          throw new Error('Não foi possível carregar os exercícios de código.');
-        }
+      if (!response.ok) {
+        if (response.status === 403) {
+          if (isMounted) {
+            setIsOutOfLives(true);
+            setLives(0);
+          }
 
-        const data = await response.json();
-        const loadedLessons = data.code_lessons ?? [];
-
-        if (isMounted) {
-          setLessons(loadedLessons);
-          setCurrentIndex(0);
-          setCode(loadedLessons[0]?.starter_code ?? '');
-        }
-      } catch (err) {
-        if (isMounted) {
-          setLessons([]);
-          setRequestError(
-            err instanceof TypeError
-              ? 'Sem conexão com o servidor. Verifique se o backend está rodando.'
-              : err.message
+          throw new Error(
+            'Você está sem vidas! Faça uma revisão para recuperar uma vida.'
           );
         }
-      } finally {
-        if (isMounted) {
-          setIsLoadingLessons(false);
-        }
+
+        throw new Error(
+          'Não foi possível carregar os exercícios de código.'
+        );
       }
-    };
 
-    fetchCodeLessons();
+      const data = await response.json();
+      const loadedLessons = data.code_lessons ?? [];
 
-    return () => {
-      isMounted = false;
-    };
-  }, [reloadKey]);
+      if (isMounted) {
+        setIsOutOfLives(false);
+        setLessons(loadedLessons);
+        setCurrentIndex(0);
+        setCode(loadedLessons[0]?.starter_code ?? '');
+      }
+    } catch (err) {
+      if (isMounted) {
+        setLessons([]);
+        setRequestError(
+          err instanceof TypeError
+            ? 'Sem conexão com o servidor. Verifique se o backend está rodando.'
+            : err.message
+        );
+      }
+    } finally {
+      if (isMounted) {
+        setIsLoadingLessons(false);
+      }
+    }
+  };
+
+  fetchCodeLessons();
+
+  return () => {
+    isMounted = false;
+  };
+}, [reloadKey]);
 
   const currentLesson = lessons[currentIndex] ?? null;
   const totalLessons = lessons.length || 1;
@@ -104,43 +147,59 @@ export default function CodeExerciseScreen() {
     }
   };
 
-  const handleRunCode = async () => {
-    if (!currentLesson || isRunning) return;
+const handleRunCode = async () => {
+  if (!currentLesson || isRunning) return;
 
-    setIsRunning(true);
-    setRequestError(null);
+  setIsRunning(true);
+  setRequestError(null);
 
-    try {
-      const response = await fetch(
-        `${API_URL}/lessons/${currentLesson.id}/run-code`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
-        }
-      );
+  try {
+    const response = await fetch(
+      `${API_URL}/lessons/${currentLesson.id}/run-code`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      }
+    );
 
-      if (!response.ok) {
-        const detail =
-          response.status === 404
-            ? 'Exercício de código não encontrado no servidor.'
-            : 'Erro no servidor ao executar o código.';
-        throw new Error(detail);
+    if (!response.ok) {
+      if (response.status === 403) {
+        setIsOutOfLives(true);
+        setLives(0);
+
+        throw new Error(
+          'Você está sem vidas! Faça uma revisão para recuperar uma vida.'
+        );
       }
 
-      const data = await response.json();
-      setExecutionResult(data);
-    } catch (err) {
-      setExecutionResult(null);
-      setRequestError(
-        err instanceof TypeError
-          ? 'Sem conexão com o servidor. Verifique se o backend está rodando.'
-          : err.message
-      );
-    } finally {
-      setIsRunning(false);
+      const detail =
+        response.status === 404
+          ? 'Exercício de código não encontrado no servidor.'
+          : 'Erro no servidor ao executar o código.';
+
+      throw new Error(detail);
     }
-  };
+
+    const data = await response.json();
+
+    setExecutionResult(data);
+
+    if (data.hearts) {
+      setLives(data.hearts.lives);
+    }
+  } catch (err) {
+    setExecutionResult(null);
+
+    setRequestError(
+      err instanceof TypeError
+        ? 'Sem conexão com o servidor. Verifique se o backend está rodando.'
+        : err.message
+    );
+  } finally {
+    setIsRunning(false);
+  }
+};
 
   const handlePrimaryAction = () => {
     if (hasPassed) {
@@ -184,7 +243,7 @@ export default function CodeExerciseScreen() {
         currentStep={currentIndex + 1}
         totalSteps={totalLessons}
         onClose={handleCloseLesson}
-        lives={5}
+        lives={lives}
       />
 
       <main className="flex-1 flex flex-col items-center justify-center max-w-3xl w-full mx-auto px-4 pb-10">
@@ -201,62 +260,82 @@ export default function CodeExerciseScreen() {
           </div>
 
           {isLoadingLessons ? (
-            <p className="py-10 text-gray-300 font-semibold text-center">
-              Carregando exercícios de código...
-            </p>
-          ) : currentLesson ? (
-            <>
-              <div className="text-left">
-                <QuestionStatement question={currentLesson.question} />
-              </div>
+  <p className="py-10 text-gray-300 font-semibold text-center">
+    Carregando exercícios de código...
+  </p>
+) : isOutOfLives ? (
+  <div className="py-8 text-center space-y-4">
+    <h2 className="text-2xl font-bold text-red-400">
+      Você está sem vidas!
+    </h2>
 
-              <CodeEditor
-                value={code}
-                onChange={handleCodeChange}
-                onRun={handleRunCode}
-                onReset={handleResetCode}
-                disabled={isRunning}
-              />
+    <p className="text-gray-300">
+      Complete uma revisão acertando 3 questões para recuperar uma vida.
+    </p>
 
-              {executionResult && (
-                <div className="w-full rounded-xl border border-gray-700 bg-[#0f191d] p-4 text-left">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs uppercase tracking-wider font-bold text-gray-400">
-                      Saída da execução
-                    </span>
-                    <span
-                      className={`text-xs font-bold ${
-                        executionResult.is_correct
-                          ? 'text-green-400'
-                          : 'text-red-400'
-                      }`}
-                    >
-                      {executionResult.passed_tests}/
-                      {executionResult.total_tests} testes
-                    </span>
-                  </div>
-                  <pre className="font-mono text-sm text-gray-100 whitespace-pre-wrap break-words m-0">
-                    {executionResult.output
-                      ? executionResult.output
-                      : '(Sem saída no terminal)'}
-                  </pre>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="py-8 text-center space-y-4">
-              <p className="text-gray-400">
-                Nenhum exercício de código disponível no momento.
-              </p>
-              <button
-                type="button"
-                onClick={() => setReloadKey((prev) => prev + 1)}
-                className="px-5 py-2 rounded-xl font-bold border-2 border-gray-600 text-gray-200 hover:bg-gray-800 transition"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          )}
+    <button
+      type="button"
+      onClick={onStartReview}
+      className="px-6 py-3 rounded-xl font-bold bg-green-500 text-green-950 hover:bg-green-600 transition"
+    >
+      Fazer revisão
+    </button>
+  </div>
+) : currentLesson ? (
+  <>
+    <div className="text-left">
+      <QuestionStatement question={currentLesson.question} />
+    </div>
+
+    <CodeEditor
+      value={code}
+      onChange={handleCodeChange}
+      onRun={handleRunCode}
+      onReset={handleResetCode}
+      disabled={isRunning}
+    />
+
+    {executionResult && (
+      <div className="w-full rounded-xl border border-gray-700 bg-[#0f191d] p-4 text-left">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs uppercase tracking-wider font-bold text-gray-400">
+            Saída da execução
+          </span>
+          <span
+            className={`text-xs font-bold ${
+              executionResult.is_correct
+                ? 'text-green-400'
+                : 'text-red-400'
+            }`}
+          >
+            {executionResult.passed_tests}/
+            {executionResult.total_tests} testes
+          </span>
+        </div>
+
+        <pre className="font-mono text-sm text-gray-100 whitespace-pre-wrap break-words m-0">
+          {executionResult.output
+            ? executionResult.output
+            : '(Sem saída no terminal)'}
+        </pre>
+      </div>
+    )}
+  </>
+) : (
+  <div className="py-8 text-center space-y-4">
+    <p className="text-gray-400">
+      Nenhum exercício de código disponível no momento.
+    </p>
+
+    <button
+      type="button"
+      onClick={() => setReloadKey((prev) => prev + 1)}
+      className="px-5 py-2 rounded-xl font-bold border-2 border-gray-600 text-gray-200 hover:bg-gray-800 transition"
+    >
+      Tentar novamente
+    </button>
+  </div>
+)}
         </div>
       </main>
 
